@@ -11,9 +11,12 @@ import java.sql.SQLException;
 public class DBConnect {
 
     private static Connection con;
-    private static String url = "jdbc:mysql://localhost/oefen_opdracht_db";
-    private static String user = "root";
-    private static String password = "rsv1er";
+    private static String url;
+    private static String user;
+    private static String password;
+    private static String urlHC = "jdbc:mysql://localhost/oefen_opdracht_db";
+    private static String userHC = "root";
+    private static String passwordHC = "rsv1er";
 
     public static Connection connect() throws SQLException {
         try {
@@ -25,15 +28,28 @@ public class DBConnect {
         } catch (IllegalAccessException iae) {
             System.err.println("Error: " + iae.getMessage());
         }
-        
-        con = DriverManager.getConnection(url, user, password);
+
+        con = DriverManager.getConnection(urlHC, userHC, passwordHC);
         return con;
     }
-    
-    public static Connection getConnection() throws SQLException, ClassNotFoundException{
-        if(con != null && !con.isClosed())
+
+    public static Connection getConnection() throws SQLException, ClassNotFoundException {
+        if (con != null && !con.isClosed()) {
             return con;
+        }
         connect();
         return con;
+    }
+
+    public static void setUrl(String aUrl) {
+        url = aUrl;
+    }
+
+    public static void setUser(String aUser) {
+        user = aUser;
+    }
+
+    public static void setPassword(String aPassword) {
+        password = aPassword;
     }
 }

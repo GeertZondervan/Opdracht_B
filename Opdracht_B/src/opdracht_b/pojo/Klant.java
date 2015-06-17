@@ -1,5 +1,7 @@
 package opdracht_b.pojo;
 
+import javafx.beans.property.SimpleBooleanProperty;
+
 /**
  *
  * @author Geert
@@ -16,6 +18,9 @@ public class Klant {
     private String toevoeging;
     private int huisnummer;
     private String woonplaats;
+
+//    private SimpleBooleanProperty checkedUpdate = new SimpleBooleanProperty(false);
+//    private SimpleBooleanProperty checkedDelete = new SimpleBooleanProperty(false);
 
     public int getKlant_id() {
         return klant_id;
@@ -97,4 +102,27 @@ public class Klant {
         this.woonplaats = woonplaats;
     }
 
+//    public SimpleBooleanProperty checkedUpdateProperty() {
+//        return this.checkedUpdate;
+//    }
+//
+//    public java.lang.Boolean getCheckedUpdate() {
+//        return this.checkedUpdateProperty().get();
+//    }
+//
+//    public void setCheckedUpdate(final java.lang.Boolean checked) {
+//        this.checkedUpdateProperty().set(checked);
+//    }
+//
+//    public SimpleBooleanProperty checkedDeleteProperty() {
+//        return this.checkedDelete;
+//    }
+//
+//    public java.lang.Boolean getCheckedDelete() {
+//        return this.checkedDeleteProperty().get();
+//    }
+//
+//    public void setCheckedDelete(final java.lang.Boolean checked) {
+//        this.checkedDeleteProperty().set(checked);
+//    }
 }
