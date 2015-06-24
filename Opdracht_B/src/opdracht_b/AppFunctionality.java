@@ -2,6 +2,7 @@ package opdracht_b;
 
 import com.sun.rowset.CachedRowSetImpl;
 import java.sql.Connection;
+import java.sql.SQLException;
 import javax.sql.rowset.CachedRowSet;
 import opdracht_b.dbconnect.DBConnect;
 import opdracht_b.pojo.Klant;
@@ -26,7 +27,7 @@ public class AppFunctionality {
             crs = new CachedRowSetImpl();
             con = DBConnect.connect();
 
-        } catch (Exception ex) {
+        } catch (SQLException ex) {
             ex.printStackTrace();
             System.out.println("Error creating crs");
 
@@ -47,40 +48,88 @@ public class AppFunctionality {
 
     }
 
-    public void readKlant(int klandId) {
+    public Klant readKlant(int klandId) {
+        Klant klant = new Klant();
         try {
             setCrs();
             crs.setCommand("SELECT voornaam, achternaam, tussenvoegsel, email, straatnaam, postcode, toevoeging, huisnummer, woonplaats FROM  Klant WHERE klant_id = '" + klandId + "';");
             crs.execute(con);
             while (crs.next()) {
-                System.out.println(crs.getString(2));
+                klant.setVoornaam(crs.getString(1));
+                klant.setAchternaam(crs.getString(2));
+                klant.setTussenvoegsel(crs.getString(3));
+                klant.setEmail(crs.getString(4));
+                klant.setStraatnaam(crs.getString(5));
+                klant.setPostcode(crs.getString(6));
+                klant.setToevoeging(crs.getString(7));
+                klant.setHuisnummer(crs.getInt(8));
+                klant.setWoonplaats(crs.getString(9));
+
             }
         } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("Error readin Klant");
         }
+        return klant;
 
     }
 
-    public void readKlant(String voornaam, String achternaam) {
+    public Klant readKlant(String voornaam, String achternaam) {
+        Klant klant = new Klant();
+        klant.setVoornaam(voornaam);
+        klant.setAchternaam(achternaam);
         try {
             setCrs();
             crs.setCommand("SELECT klant_id, tussenvoegsel, email, straatnaam, postcode, toevoeging, huisnummer, woonplaats FROM  Klant WHERE voornaam = '" + voornaam + "'AND achternaam = '" + achternaam + "';");
             crs.execute(con);
             while (crs.next()) {
-                System.out.println(crs.getString(3));
+                klant.setKlant_id(crs.getInt(1));
+                klant.setTussenvoegsel(crs.getString(2));
+                klant.setEmail(crs.getString(3));
+                klant.setStraatnaam(crs.getString(4));
+                klant.setPostcode(crs.getString(5));
+                klant.setToevoeging(crs.getString(6));
+                klant.setHuisnummer(crs.getInt(7));
+                klant.setWoonplaats(crs.getString(8));
             }
         } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("Error reading Klant");
         }
+        return klant;
 
     }
 
-    public void readKlant(String postcode, int huisnummer) {
+    public Klant readKlant(String postcode, int huisnummer) {
+        Klant klant = new Klant();
+        klant.setPostcode(postcode);
+        klant.setHuisnummer(huisnummer);
         try {
             setCrs();
             crs.setCommand("SELECT voornaam, achternaam, tussenvoegsel, email, straatnaam, toevoeging, woonplaats FROM  Klant WHERE postcode = '" + postcode + "'AND huisnummer = '" + huisnummer + "';");
+            crs.execute(con);
+            while (crs.next()) {
+                klant.setVoornaam(crs.getString(1));
+                klant.setAchternaam(crs.getString(2));
+                klant.setTussenvoegsel(crs.getString(3));
+                klant.setEmail(crs.getString(4));
+                klant.setStraatnaam(crs.getString(5));
+                klant.setToevoeging(crs.getString(6));
+                klant.setWoonplaats(crs.getString(7));;
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            System.out.println("Error readin Klant");
+        }
+        return klant;
+    }
+
+    public void updateKlant(Klant klant) {
+        try {
+            setCrs();
+            crs.setCommand("UPDATE Klant set voornaam = '" + klant.getVoornaam() +"', achternaam = '" + klant.getAchternaam() + "', tussenvoegsel = '" + klant.getTussenvoegsel() + "', email = '" + klant.getEmail() +
+                    "', straatnaam = '" + klant.getStraatnaam() + "', postcode = '" + klant.getPostcode() + "', toevoeging = '" + klant.getToevoeging() + "', huisnummer = '" + klant.getHuisnummer()  + 
+                    "', woonplaats = '" + klant.getWoonplaats() + "' where klant_id = " + klant.getKlant_id());
             crs.execute(con);
             while (crs.next()) {
                 System.out.println(crs.getString(2));
@@ -89,68 +138,53 @@ public class AppFunctionality {
             ex.printStackTrace();
             System.out.println("Error readin Klant");
         }
-
     }
-
-//    public void updateKlant(Klant klant) {
-//        try {
-//            setCrs();
-//            crs.setCommand("SELECT voornaam, achternaam, tussenvoegsel, email, straatnaam, toevoeging, woonplaats FROM  Klant WHERE postcode = '" + postcode + "'AND huisnummer = '" + huisnummer + "';");
-//            crs.execute(con);
-//            while (crs.next()) {
-//                System.out.println(crs.getString(2));
-//            }
-//        }catch (Exception ex) {
-//            ex.printStackTrace();
-//            System.out.println("Error readin Klant");
-//        }
-//    }
     
-    public void deleteKlant(int klantId){
+    
+    public void deleteKlant(int klantId) {
         try {
             setCrs();
             crs.setCommand("DELETE FROM Klant WHERE klant_id = '" + klantId + "';");
             crs.execute(con);
-            
+
         } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("Error deleting Klant");
         }
     }
-    
-    public void deleteKlant(String voornaam, String tussenvoegsel, String achternaam){
+
+    public void deleteKlant(String voornaam, String tussenvoegsel, String achternaam) {
         try {
             setCrs();
             crs.setCommand("DELETE FROM Klant WHERE voornaam = '" + voornaam + "' AND tussenvoegsel = '" + tussenvoegsel + "' AND achternaam = '" + achternaam + "';");
             crs.execute(con);
-            
+
         } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("Error deleting Klant");
         }
     }
-    
-    public void deleteKlant(String voornaam, String achternaam){
+
+    public void deleteKlant(String voornaam, String achternaam) {
         try {
             setCrs();
             crs.setCommand("DELETE FROM Klant WHERE voornaam = '" + voornaam + "' AND achternaam = '" + achternaam + "';");
             crs.execute(con);
-            
+
         } catch (Exception ex) {
             ex.printStackTrace();
             System.out.println("Error deleting Klant");
         }
     }
-    
-    public void voerSQLUit(String sqlQuery){
-        //
-        try{
+
+    public void voerSQLUit(String sqlQuery) {     
+        try {
             setCrs();
             crs.setCommand(sqlQuery);
             crs.execute(con);
-        }catch(Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
-            System.out.println("Error SQL klopt niet");        
+            System.out.println("Error SQL klopt niet");
         }
     }
 }

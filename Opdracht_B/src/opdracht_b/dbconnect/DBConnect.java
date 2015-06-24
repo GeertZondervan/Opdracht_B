@@ -28,8 +28,9 @@ public class DBConnect {
         } catch (IllegalAccessException iae) {
             System.err.println("Error: " + iae.getMessage());
         }
-
+        
         con = DriverManager.getConnection(urlHC, userHC, passwordHC);
+        
         return con;
     }
 
@@ -39,6 +40,15 @@ public class DBConnect {
         }
         connect();
         return con;
+    }
+    public static void rollBackCon(){
+        try{
+            con.rollback();
+        }
+        catch(Exception ex){
+            ex.printStackTrace();
+                    
+        }
     }
 
     public static void setUrl(String aUrl) {
@@ -51,5 +61,17 @@ public class DBConnect {
 
     public static void setPassword(String aPassword) {
         password = aPassword;
+    }
+
+    public static String getUrl() {
+        return url;
+    }
+
+    public static String getUser() {
+        return user;
+    }
+
+    public static String getPassword() {
+        return password;
     }
 }

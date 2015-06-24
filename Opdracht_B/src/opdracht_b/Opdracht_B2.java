@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -23,6 +23,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
@@ -40,6 +41,7 @@ import javax.sql.rowset.CachedRowSet;
 import opdracht_b.dbconnect.DBConnect;
 import opdracht_b.pojo.Klant;
 import opdracht_b.pojo.KlantWrapper;
+import org.apache.commons.validator.routines.EmailValidator;
 
 public class Opdracht_B2 extends Application {
 
@@ -55,7 +57,7 @@ public class Opdracht_B2 extends Application {
     private CachedRowSet crs;
 
     private final Stage klantStage = new Stage();
-    private GridPane newKlantPane = new GridPane();
+    private GridPane newKlantPane;
 
     private CheckBoxCellFactory cbcf = new CheckBoxCellFactory();
 
@@ -166,7 +168,7 @@ public class Opdracht_B2 extends Application {
         btVervers.setOnAction(e -> buildData());
 
         btNewKlant.setOnAction(e -> {
-            klantStage.initOwner(primaryStage);
+            //klantStage.initOwner(primaryStage);
             newKlantScherm();
         });
 
@@ -209,6 +211,14 @@ public class Opdracht_B2 extends Application {
 //                   functions.deleteKlant(((KlantWrapper)klant).getKlant_id());
         }
         );
+        btRandom.setOnAction(e ->{
+            Klant klantje =  klantje = functions.readKlant("Susanne" , "Wezels");
+            klantje.setVoornaam("Suzy");
+            klantje.setAchternaam("Wessels");
+            functions.updateKlant(klantje);
+            
+            System.out.println(klantje.getKlant_id() + " " + klantje.getVoornaam() + "DDDDDDD");
+        });
     }
 
     public static void main(String[] args) {
@@ -228,6 +238,7 @@ public class Opdracht_B2 extends Application {
             crs.execute(con);
 
             //table column added dynamicly
+            tableView.setEditable(true);
             for (int i = 0; i < crs.getMetaData().getColumnCount(); i++) {
                 final int j = i;
                 TableColumn col = new TableColumn(crs.getMetaData().getColumnName(i + 1));
@@ -241,6 +252,15 @@ public class Opdracht_B2 extends Application {
                     }
 
                 });
+                col.setOnEditCommit(
+                new EventHandler<TableColumn.CellEditEvent<KlantWrapper, String>>() {
+                    @Override
+                    public void handle(TableColumn.CellEditEvent<KlantWrapper, String> t) {
+                        ((KlantWrapper) t.getTableView().getItems().get(
+                                t.getTablePosition().getRow())).setVoornaam(t.getNewValue());
+                    }
+                }
+        );
 
                 tableView.getColumns().addAll(col);
                 System.out.println("Column [" + i + "] ");
@@ -265,78 +285,98 @@ public class Opdracht_B2 extends Application {
             d_Col.setCellFactory(CheckBoxTableCell.forTableColumn(d_Col));
             d_Col.setEditable(true);
 
-            TableColumn registeredCol = new TableColumn("Registered");
-            registeredCol.setCellValueFactory(
-                    new Callback<CellDataFeatures<KlantWrapper, Boolean>, ObservableValue<Boolean>>() {
-                        //This callback tell the cell how to bind the data model 'Registered' property to
-                        //the cell, itself.
+            TableColumn delButtonsCol = new TableColumn("Delete");
+            delButtonsCol.setSortable(false);
+            delButtonsCol.setCellValueFactory(
+                    new Callback<TableColumn.CellDataFeatures<String, Boolean>, ObservableValue<Boolean>>() {
+
                         @Override
-                        public ObservableValue<Boolean> call(CellDataFeatures<KlantWrapper, Boolean> param) {
-                            return param.getValue().to_deleteProperty();
+                        public ObservableValue<Boolean> call(TableColumn.CellDataFeatures<String, Boolean> p) {
+                            return new SimpleBooleanProperty(p.getValue() != null);
                         }
                     });
+            delButtonsCol.setCellFactory(
+                    new Callback<TableColumn<String, Boolean>, TableCell<String, Boolean>>() {
 
-            //This tell how to insert and render a checkbox in the cell
-            // 
-            //The CheckBoxTableCell has the updateItem() method which by default links up the
-            //cell value (i.e. the 'Registered' property to the checkbox.  And this method is
-            //automatically call at the appropriate time, such as when creating and rendering
-            //the cell (I believe).
-            //
-            //In this case, as the registed_col.setCellValueFactory() method has specified
-            //'Registered' in the actual data model (i.e. personList), therefore the checkbox will
-            //be bound to this property.
-            registeredCol.setCellFactory(CheckBoxTableCell.forTableColumn(registeredCol));
+                        @Override
+                        public TableCell<String, Boolean> call(TableColumn<String, Boolean> p) {
+                            return new ButtonCellDelete(tableView);
+                        }
+
+                    });
+            /*
+             TableColumn registeredCol = new TableColumn("Registered");
+             registeredCol.setCellValueFactory(
+             new Callback<CellDataFeatures<KlantWrapper, Boolean>, ObservableValue<Boolean>>() {
+             //This callback tell the cell how to bind the data model 'Registered' property to
+             //the cell, itself.
+             @Override
+             public ObservableValue<Boolean> call(CellDataFeatures<KlantWrapper, Boolean> param) {
+             return param.getValue().to_deleteProperty();
+             }
+             });
+
+             //This tell how to insert and render a checkbox in the cell
+             // 
+             //The CheckBoxTableCell has the updateItem() method which by default links up the
+             //cell value (i.e. the 'Registered' property to the checkbox.  And this method is
+             //automatically call at the appropriate time, such as when creating and rendering
+             //the cell (I believe).
+             //
+             //In this case, as the registed_col.setCellValueFactory() method has specified
+             //'Registered' in the actual data model (i.e. personList), therefore the checkbox will
+             //be bound to this property.
+             registeredCol.setCellFactory(CheckBoxTableCell.forTableColumn(registeredCol));
 
             
             
-            TableColumn<KlantWrapper, Boolean> select_col = new TableColumn<KlantWrapper, Boolean>("Select");
+             TableColumn<KlantWrapper, Boolean> select_col = new TableColumn<KlantWrapper, Boolean>("Select");
 
-            List<BooleanProperty> selectedRowList = new ArrayList<BooleanProperty>();
+             List<BooleanProperty> selectedRowList = new ArrayList<BooleanProperty>();
 
-            //This callback allows the checkbox in the column to access selectedRowList (or more
-            //exactly, the boolean property it contains
-            Callback<Integer, ObservableValue<Boolean>> selectedStateSelectColumn
-                    = new Callback<Integer, ObservableValue<Boolean>>() {
+             //This callback allows the checkbox in the column to access selectedRowList (or more
+             //exactly, the boolean property it contains
+             Callback<Integer, ObservableValue<Boolean>> selectedStateSelectColumn
+             = new Callback<Integer, ObservableValue<Boolean>>() {
 
-                        //index in this context reference the table cell index (I believe)
-                        @Override
-                        public ObservableValue<Boolean> call(Integer index) {
-                            return selectedRowList.get(index);
-                        }
-                    };
-            //Initialise the selectedRowList
+             //index in this context reference the table cell index (I believe)
+             @Override
+             public ObservableValue<Boolean> call(Integer index) {
+             return selectedRowList.get(index);
+             }
+             };
+             //Initialise the selectedRowList
 
-//            for (Person p : data) {
-//                //initially, it starts off as false, i.e. unticked state
-//                selectedRowList.add(new SimpleBooleanProperty());
-//            }
-//            
-            for(int i = 0; i < data.size(); i++){
-               //initially, it starts off as false, i.e. unticked state
-                selectedRowList.add(new SimpleBooleanProperty());
-            }
+             //            for (Person p : data) {
+             //                //initially, it starts off as false, i.e. unticked state
+             //                selectedRowList.add(new SimpleBooleanProperty());
+             //            }
+             //            
+             for(int i = 0; i < data.size(); i++){
+             //initially, it starts off as false, i.e. unticked state
+             selectedRowList.add(new SimpleBooleanProperty());
+             }
 
-            select_col.setCellValueFactory(
-                    new Callback<CellDataFeatures<KlantWrapper, Boolean>, ObservableValue<Boolean>>() {
-                        //retrieve the cell index and use it get boolean property in the selectedRowList
-                        @Override
-                        public ObservableValue<Boolean> call(CellDataFeatures<KlantWrapper, Boolean> cdf) {
+             select_col.setCellValueFactory(
+             new Callback<CellDataFeatures<KlantWrapper, Boolean>, ObservableValue<Boolean>>() {
+             //retrieve the cell index and use it get boolean property in the selectedRowList
+             @Override
+             public ObservableValue<Boolean> call(CellDataFeatures<KlantWrapper, Boolean> cdf) {
 
-                            TableView<KlantWrapper> tblView = cdf.getTableView();
+             TableView<KlantWrapper> tblView = cdf.getTableView();
 
-                            KlantWrapper rowData = cdf.getValue();
+             KlantWrapper rowData = cdf.getValue();
 
-                            int rowIndex = tblView.getItems().indexOf(rowData);
+             int rowIndex = tblView.getItems().indexOf(rowData);
 
-                            return selectedRowList.get(rowIndex);
-                        }
-                    });
+             return selectedRowList.get(rowIndex);
+             }
+             });
 
-            select_col.setCellFactory(
-                    CheckBoxTableCell.forTableColumn(selectedStateSelectColumn));
-
-            tableView.getColumns().addAll(colUpdate, registeredCol);
+             select_col.setCellFactory(
+             CheckBoxTableCell.forTableColumn(selectedStateSelectColumn));
+             */
+            tableView.getColumns().addAll(colUpdate, d_Col, delButtonsCol);
 
             tableView.setEditable(true);
 
@@ -361,6 +401,7 @@ public class Opdracht_B2 extends Application {
     }
 
     public void newKlantScherm() {
+        newKlantPane = new GridPane();
         TextField tfVoornaam = new TextField();
         TextField tfAchternaam = new TextField();
         TextField tfTussenvoegsel = new TextField();
@@ -396,42 +437,32 @@ public class Opdracht_B2 extends Application {
         newKlantPane.add(btRegisterKlant, 1, 10);
 
         btRegisterKlant.setOnAction(e -> {
+
             Klant klant = new Klant();
+
             klant.setVoornaam(tfVoornaam.getText());
             klant.setTussenvoegsel(tfTussenvoegsel.getText());
             klant.setAchternaam(tfAchternaam.getText());
             klant.setEmail(tfEmail.getText());
             klant.setStraatnaam(tfStraatnaam.getText());
             klant.setPostcode(tfPostcode.getText());
-            klant.setToevoeging(tfPostcode.getText());
+            klant.setToevoeging(tfToevoeging.getText());
             klant.setHuisnummer(Integer.parseInt(tfHuisnummer.getText()));
             klant.setWoonplaats(tfWoonplaats.getText());
-//            String voornaam = tfVoornaam.getText();
-//            String achternaam = tfAchternaam.getText();
-//            String tussenvoegsel = tfTussenvoegsel.getText();
-//            String email = tfEmail.getText();
-//            String straatnaam = tfStraatnaam.getText();
-//            String postcode = tfPostcode.getText();
-//            String toevoeging = tfToevoeging.getText();
-//            String huisnummer = tfHuisnummer.getText();
-//            String woonplaats = tfWoonplaats.getText();
-            functions.createKlant(klant);
-//            Connection con;
-//            try {
-//                crs = new CachedRowSetImpl();
-//                con = DBConnect.connect();
-//                crs.setCommand("insert into oefen_opdracht_db.Klant (voornaam, achternaam, tussenvoegsel, email, straatnaam, postcode, toevoeging, huisnummer, woonplaats) VALUES ( '"
-//                        + voornaam + "', '" + achternaam + "', '" + tussenvoegsel + "', '" + email + "', '" + straatnaam + "', '" + postcode + "', '" + toevoeging + "', '" +
-//                        huisnummer + "', '" + woonplaats + "')");
-//                crs.execute(con);
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//                System.out.println("Error inserting klant into database");
-//
-//            }
-            klantStage.close();
+
+            EmailValidator emailValid = EmailValidator.getInstance();
+            boolean valid = emailValid.isValid(klant.getEmail());
+            if (valid) {
+                functions.createKlant(klant);
+                klantStage.close();
+
+            } else {
+                tfEmail.setText("Invalid email adress");
+
+            }
 
             buildData();
+
         }
         );
         Scene klantScene = new Scene(newKlantPane, 300, 400);
