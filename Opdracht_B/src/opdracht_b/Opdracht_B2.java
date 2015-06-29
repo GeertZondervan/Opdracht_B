@@ -466,7 +466,7 @@ public class Opdracht_B2 extends Application {
         }
         );
         Scene klantScene = new Scene(newKlantPane, 300, 400);
-        klantStage.initModality(Modality.APPLICATION_MODAL);
+        //klantStage.initModality(Modality.APPLICATION_MODAL);
         klantStage.setScene(klantScene);
         klantStage.setTitle("Nieuwe Klant toevoegen");
         klantStage.show();

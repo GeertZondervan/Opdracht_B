@@ -136,16 +136,16 @@ public class AppFunctionalityTest {
     public void testUpdateKlant() {
         System.out.println("UpdateKlant");
         functions.createKlant(klant);
-        
+
         Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
         result.setVoornaam("Henkie");
         result.setAchternaam("Denkie");
         result.setPostcode("5678OO");
         result.setWoonplaats("Utrecht");
         functions.updateKlant(result);
-        
+
         Klant updatedResult = functions.readKlant(result.getVoornaam(), result.getAchternaam());
-        
+
         assertNotNull("result, must not be null", result);
         assertNotNull("updatedResult, must not be null", updatedResult);
         assertEquals("voornaam must be equal", result.getVoornaam(), updatedResult.getVoornaam());
@@ -160,59 +160,69 @@ public class AppFunctionalityTest {
      */
     @Test
     public void testDeleteKlant_int() {
-       functions.createKlant(klant);
-       Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
-       int id = result.getKlant_id();
-       functions.deleteKlant(id);
-       
-       Klant resultDeleted = functions.readKlant(id);
-       System.out.println();
-        assertNull("result is null", resultDeleted);
-        
-       
-       
+        functions.createKlant(klant);
+        Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
+        int id = result.getKlant_id();
+
+        functions.deleteKlant(id);
+
+        Klant resultDeleted = functions.readKlant(id);
+
+        assertNull("result is null", resultDeleted.getAchternaam());
+
     }
 
-//    /**
-//     * Test of deleteKlant method, of class AppFunctionality.
-//     */
-//    @Test
-//    public void testDeleteKlant_3args() {
-//        System.out.println("deleteKlant");
-//        String voornaam = "";
-//        String tussenvoegsel = "";
-//        String achternaam = "";
-//        AppFunctionality instance = new AppFunctionality();
-//        instance.deleteKlant(voornaam, tussenvoegsel, achternaam);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
-//
-//    /**
-//     * Test of deleteKlant method, of class AppFunctionality.
-//     */
-//    @Test
-//    public void testDeleteKlant_String_String() {
-//        System.out.println("deleteKlant");
-//        String voornaam = "";
-//        String achternaam = "";
-//        AppFunctionality instance = new AppFunctionality();
-//        instance.deleteKlant(voornaam, achternaam);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
-//
-//    /**
-//     * Test of voerSQLUit method, of class AppFunctionality.
-//     */
-//    @Test
-//    public void testVoerSQLUit() {
-//        System.out.println("voerSQLUit");
-//        String sqlQuery = "";
-//        AppFunctionality instance = new AppFunctionality();
-//        instance.voerSQLUit(sqlQuery);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
-//    
+    /**
+     * Test of deleteKlant method, of class AppFunctionality.
+     */
+    @Test
+    public void testDeleteKlant_3args() {
+        functions.createKlant(klant);
+        Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
+        int id = result.getKlant_id();
+
+        functions.deleteKlant(klant.getVoornaam(), klant.getTussenvoegsel(), klant.getAchternaam());
+
+        Klant resultDeleted = functions.readKlant(id);
+
+        assertNull("result is null", resultDeleted.getAchternaam());
+
+    }
+
+    /**
+     * Test of deleteKlant method, of class AppFunctionality.
+     */
+    @Test
+    public void testDeleteKlant_String_String() {
+        functions.createKlant(klant);
+        Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
+        int id = result.getKlant_id();
+
+        functions.deleteKlant(klant.getVoornaam(), klant.getAchternaam());
+
+        Klant resultDeleted = functions.readKlant(id);
+
+        assertNull("result is null", resultDeleted.getAchternaam());
+    }
+
+    /**
+     * Test of voerSQLUit method, of class AppFunctionality.
+     */
+    @Test
+    public void testVoerSQLUit() {
+        System.out.println("voerSQLUit");
+        String sql = "insert into oefen_opdracht_db.Klant (voornaam, achternaam, tussenvoegsel, email, straatnaam, postcode, toevoeging, huisnummer, woonplaats) VALUES ( '"
+                + klant.getVoornaam() + "', '" + klant.getAchternaam() + "', '" + klant.getTussenvoegsel() + "', '" + klant.getEmail() + "', '" + klant.getStraatnaam() + "', '" + klant.getPostcode() + "', '" + klant.getToevoeging() + "', '"
+                + klant.getHuisnummer() + "', '" + klant.getWoonplaats() + "')";
+
+        functions.voerSQLUit(sql);
+
+        Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
+
+        assertNotNull("klant, must not be null", klant);
+        assertNotNull("Result, must not be null", result);
+        assertEquals("klant, all fields must be equal", klant, result);
+
+    }
+
 }
