@@ -93,7 +93,7 @@ public class AppFunctionalityTest {
      */
     @Test
     public void testReadKlant_int() {
-        System.out.println("readKlant");
+        System.out.println("readKlant klantId");
         functions.createKlant(klant);
         Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
         int id = result.getKlant_id();
@@ -110,7 +110,7 @@ public class AppFunctionalityTest {
      */
     @Test
     public void testReadKlant_String_String() {
-        System.out.println("readKlant");
+        System.out.println("readKlant voornaam achternaam");
         functions.createKlant(klant);
         Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
 
@@ -124,7 +124,7 @@ public class AppFunctionalityTest {
      */
     @Test
     public void testReadKlant_String_int() {
-        System.out.println("readKlant");
+        System.out.println("readKlant klantId");
         functions.createKlant(klant);
         Klant result = functions.readKlant(klant.getPostcode(), klant.getHuisnummer());
 
@@ -160,6 +160,7 @@ public class AppFunctionalityTest {
      */
     @Test
     public void testDeleteKlant_int() {
+        System.out.println("Delete Klant klantId");
         functions.createKlant(klant);
         Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
         int id = result.getKlant_id();
@@ -177,6 +178,7 @@ public class AppFunctionalityTest {
      */
     @Test
     public void testDeleteKlant_3args() {
+        System.out.println("Delete Klant Voornaam, tussenvoegsel, achternaam");
         functions.createKlant(klant);
         Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
         int id = result.getKlant_id();
@@ -194,6 +196,7 @@ public class AppFunctionalityTest {
      */
     @Test
     public void testDeleteKlant_String_String() {
+        System.out.println("Delete Klant voornaam achternaam");
         functions.createKlant(klant);
         Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
         int id = result.getKlant_id();

@@ -42,9 +42,13 @@ import opdracht_b.dbconnect.DBConnect;
 import opdracht_b.pojo.Klant;
 import opdracht_b.pojo.KlantWrapper;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.apache.commons.validator.routines.IntegerValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Opdracht_B2 extends Application {
-
+    
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
     private ObservableList<ObservableList> data;
     private BorderPane mainPane = new BorderPane();
     private MenuBar menuBar = new MenuBar();
@@ -161,7 +165,7 @@ public class Opdracht_B2 extends Application {
 
         //Button functions
         btSetConnection.setOnAction(e -> {
-            functions.setConnection(tfUrlDatasource.getText(), tfUser.getText(), tfPassword.getText());
+            functions.setConnection(tfUrlDatasource.getText().trim(), tfUser.getText().trim(), tfPassword.getText().trim());
             buildData();
         });
 
@@ -211,12 +215,12 @@ public class Opdracht_B2 extends Application {
 //                   functions.deleteKlant(((KlantWrapper)klant).getKlant_id());
         }
         );
-        btRandom.setOnAction(e ->{
-            Klant klantje =  klantje = functions.readKlant("Susanne" , "Wezels");
+        btRandom.setOnAction(e -> {
+            Klant klantje = klantje = functions.readKlant("Susanne", "Wezels");
             klantje.setVoornaam("Suzy");
             klantje.setAchternaam("Wessels");
             functions.updateKlant(klantje);
-            
+
             System.out.println(klantje.getKlant_id() + " " + klantje.getVoornaam() + "DDDDDDD");
         });
     }
@@ -229,9 +233,19 @@ public class Opdracht_B2 extends Application {
         Connection con;
         data = FXCollections.observableArrayList();
         try {
+            log.info("Database Connection set, url: {}, user: {}, password: {} \n", DBConnect.getUrl(), DBConnect.getUser(), DBConnect.getPassword());
+            
             //Database connection + CachedRowSetImpl
+//            crs = new CachedRowSetImpl();
+//            con = DBConnect.getConnection();
+//            crs.setCommand("SELECT * from Klant");
+//            int[] keys = {1};
+//            crs.setKeyColumns(keys);
+//            crs.execute(con);
+            
+            //Database coneection with Hikari + CachedRowSetImpl
             crs = new CachedRowSetImpl();
-            con = DBConnect.connect();
+            con = DBConnect.connectWithHikari();
             crs.setCommand("SELECT * from Klant");
             int[] keys = {1};
             crs.setKeyColumns(keys);
@@ -253,17 +267,16 @@ public class Opdracht_B2 extends Application {
 
                 });
                 col.setOnEditCommit(
-                new EventHandler<TableColumn.CellEditEvent<KlantWrapper, String>>() {
-                    @Override
-                    public void handle(TableColumn.CellEditEvent<KlantWrapper, String> t) {
-                        ((KlantWrapper) t.getTableView().getItems().get(
-                                t.getTablePosition().getRow())).setVoornaam(t.getNewValue());
-                    }
-                }
-        );
+                        new EventHandler<TableColumn.CellEditEvent<KlantWrapper, String>>() {
+                            @Override
+                            public void handle(TableColumn.CellEditEvent<KlantWrapper, String> t) {
+                                ((KlantWrapper) t.getTableView().getItems().get(
+                                        t.getTablePosition().getRow())).setVoornaam(t.getNewValue());
+                            }
+                        }
+                );
 
                 tableView.getColumns().addAll(col);
-                System.out.println("Column [" + i + "] ");
             }
 
             TableColumn colUpdate = new TableColumn("Update");
@@ -388,7 +401,7 @@ public class Opdracht_B2 extends Application {
                     //iterate Column
                     row.add(crs.getString(i));
                 }
-                System.out.println("Row [1] added " + row);
+                log.info("Row added: {}", row);
                 data.add(row);
 
                 tableView.setItems(data);
@@ -440,25 +453,31 @@ public class Opdracht_B2 extends Application {
 
             Klant klant = new Klant();
 
-            klant.setVoornaam(tfVoornaam.getText());
-            klant.setTussenvoegsel(tfTussenvoegsel.getText());
-            klant.setAchternaam(tfAchternaam.getText());
-            klant.setEmail(tfEmail.getText());
-            klant.setStraatnaam(tfStraatnaam.getText());
-            klant.setPostcode(tfPostcode.getText());
-            klant.setToevoeging(tfToevoeging.getText());
-            klant.setHuisnummer(Integer.parseInt(tfHuisnummer.getText()));
-            klant.setWoonplaats(tfWoonplaats.getText());
+            klant.setVoornaam(tfVoornaam.getText().trim());
+            klant.setTussenvoegsel(tfTussenvoegsel.getText().trim());
+            klant.setAchternaam(tfAchternaam.getText().trim());
+            klant.setEmail(tfEmail.getText().trim());
+            klant.setStraatnaam(tfStraatnaam.getText().trim());
+            klant.setPostcode(tfPostcode.getText().trim());
+            klant.setToevoeging(tfToevoeging.getText().trim());
+
+            try {
+                klant.setHuisnummer(Integer.parseInt(tfHuisnummer.getText().trim()));
+            } catch (NumberFormatException ex) {
+                tfHuisnummer.setText("Voer een integer in");
+            }
+
+            klant.setWoonplaats(tfWoonplaats.getText().trim());
 
             EmailValidator emailValid = EmailValidator.getInstance();
             boolean valid = emailValid.isValid(klant.getEmail());
-            if (valid) {
+
+            if (valid && !(klant.getHuisnummer() <= 0)) {
                 functions.createKlant(klant);
                 klantStage.close();
 
-            } else {
+            } else if (!valid) {
                 tfEmail.setText("Invalid email adress");
-
             }
 
             buildData();
