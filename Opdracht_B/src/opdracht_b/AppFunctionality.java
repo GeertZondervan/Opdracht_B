@@ -1,6 +1,7 @@
 package opdracht_b;
 
 import com.sun.rowset.CachedRowSetImpl;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.rowset.CachedRowSet;
@@ -18,8 +19,8 @@ public class AppFunctionality {
     private static CachedRowSet crs;
     private Connection con;
     private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private boolean hikariSelected = true;
 
-    
     public void setConnection(String url, String user, String password) {
         DBConnect.setUrl(url);
         DBConnect.setUser(user);
@@ -29,8 +30,11 @@ public class AppFunctionality {
     public void setCrs() {
         try {
             crs = new CachedRowSetImpl();
-            con = DBConnect.connect();
-
+            if (hikariSelected) {
+                con = DBConnect.connectWithHikari();
+            } else {
+                con = DBConnect.connectWithC3p0();
+            }
         } catch (SQLException ex) {
             log.error("Cannot create crs", ex);
 
@@ -42,12 +46,20 @@ public class AppFunctionality {
             log.info("Creating Klant {} {} \n", klant.getVoornaam(), klant.getAchternaam());
             setCrs();
             crs.setCommand("insert into oefen_opdracht_db.Klant (voornaam, achternaam, tussenvoegsel, email, straatnaam, postcode, toevoeging, huisnummer, woonplaats) VALUES ( '"
-                    + klant.getVoornaam() + "', '" + klant.getAchternaam() + "', '" + klant.getTussenvoegsel() + "', '" + klant.getEmail() + "', '" + klant.getStraatnaam() + "', '" + klant.getPostcode() + "', '" + klant.getToevoeging() + "', '"
-                    + klant.getHuisnummer() + "', '" + klant.getWoonplaats() + "')");
+                    + klant.getVoornaam() + "', '" + klant.getAchternaam() + "', '" + klant.getTussenvoegsel() + "', '" + klant.getEmail() + "', '" + klant.getStraatnaam() + "', '"
+                    + klant.getPostcode() + "', '" + klant.getToevoeging() + "', '" + klant.getHuisnummer() + "', '" + klant.getWoonplaats() + "')");
             crs.execute(con);
         } catch (Exception ex) {
             log.error("Cannot insert Klant into database \n", ex);
-
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                    con = null;
+                } catch (SQLException ex) {
+                    log.error("Cannot close connection \n", con.toString());
+                }
+            }
         }
     }
 
@@ -72,7 +84,17 @@ public class AppFunctionality {
             }
         } catch (Exception ex) {
             log.error("Cannot read Klant with klantId {}\n", klandId, ex);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                    con = null;
+                } catch (SQLException ex) {
+                    log.error("Cannot close connection \n", con.toString());
+                }
+            }
         }
+
         return klant;
 
     }
@@ -84,7 +106,8 @@ public class AppFunctionality {
         try {
             log.info("Reading Klant {} {}\n", voornaam, achternaam);
             setCrs();
-            crs.setCommand("SELECT klant_id, tussenvoegsel, email, straatnaam, postcode, toevoeging, huisnummer, woonplaats FROM  Klant WHERE voornaam = '" + voornaam + "'AND achternaam = '" + achternaam + "';");
+            crs.setCommand("SELECT klant_id, tussenvoegsel, email, straatnaam, postcode, toevoeging, huisnummer, woonplaats FROM  Klant WHERE voornaam = '"
+                    + voornaam + "'AND achternaam = '" + achternaam + "';");
             crs.execute(con);
             while (crs.next()) {
                 klant.setKlant_id(crs.getInt(1));
@@ -97,8 +120,18 @@ public class AppFunctionality {
                 klant.setWoonplaats(crs.getString(8));
             }
         } catch (Exception ex) {
-            log.error("Cannot read Klan {} {}\n", voornaam, achternaam, ex);
+            log.error("Cannot read Klant {} {}\n", voornaam, achternaam, ex);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                    con = null;
+                } catch (SQLException ex) {
+                    log.error("Cannot close connection \n", con.toString());
+                }
+            }
         }
+
         return klant;
 
     }
@@ -123,6 +156,15 @@ public class AppFunctionality {
             }
         } catch (Exception ex) {
             log.error("Could not read Klant\n", ex);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                    con = null;
+                } catch (SQLException ex) {
+                    log.error("Cannot close connection \n", con.toString());
+                }
+            }
         }
         return klant;
     }
@@ -131,15 +173,24 @@ public class AppFunctionality {
         try {
             log.info("Updating Klant {} {}\n", klant.getVoornaam(), klant.getAchternaam());
             setCrs();
-            crs.setCommand("UPDATE Klant set voornaam = '" + klant.getVoornaam() + "', achternaam = '" + klant.getAchternaam() + "', tussenvoegsel = '" + klant.getTussenvoegsel() + "', email = '" + klant.getEmail()
-                    + "', straatnaam = '" + klant.getStraatnaam() + "', postcode = '" + klant.getPostcode() + "', toevoeging = '" + klant.getToevoeging() + "', huisnummer = '" + klant.getHuisnummer()
-                    + "', woonplaats = '" + klant.getWoonplaats() + "' where klant_id = " + klant.getKlant_id());
+            crs.setCommand("UPDATE Klant set voornaam = '" + klant.getVoornaam() + "', achternaam = '" + klant.getAchternaam() + "', tussenvoegsel = '" + klant.getTussenvoegsel()
+                    + "', email = '" + klant.getEmail() + "', straatnaam = '" + klant.getStraatnaam() + "', postcode = '" + klant.getPostcode() + "', toevoeging = '"
+                    + klant.getToevoeging() + "', huisnummer = '" + klant.getHuisnummer() + "', woonplaats = '" + klant.getWoonplaats() + "' where klant_id = " + klant.getKlant_id());
             crs.execute(con);
             while (crs.next()) {
                 System.out.println(crs.getString(2));
             }
         } catch (Exception ex) {
             log.error("Cannot Update Klant {} {}\n", klant.getVoornaam(), klant.getAchternaam(), ex);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                    con = null;
+                } catch (SQLException ex) {
+                    log.error("Cannot close connection \n", con.toString());
+                }
+            }
         }
     }
 
@@ -152,6 +203,15 @@ public class AppFunctionality {
 
         } catch (Exception ex) {
             log.error("Cannot delete Klant\n", ex);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                    con = null;
+                } catch (SQLException ex) {
+                    log.error("Cannot close connection \n", con.toString());
+                }
+            }
         }
     }
 
@@ -164,6 +224,15 @@ public class AppFunctionality {
 
         } catch (Exception ex) {
             log.error("Cannot delete Klant\n", ex);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                    con = null;
+                } catch (SQLException ex) {
+                    log.error("Cannot close connection \n", con.toString());
+                }
+            }
         }
     }
 
@@ -176,6 +245,15 @@ public class AppFunctionality {
 
         } catch (Exception ex) {
             log.error("Cannot delete Klant\n", ex);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                    con = null;
+                } catch (SQLException ex) {
+                    log.error("Cannot close connection \n", con.toString());
+                }
+            }
         }
     }
 
@@ -187,6 +265,92 @@ public class AppFunctionality {
             crs.execute(con);
         } catch (Exception ex) {
             log.error("Cannot execute Query {}\n", sqlQuery, ex);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                    con = null;
+                } catch (SQLException ex) {
+                    log.error("Cannot close connection \n", con.toString());
+                }
+            }
         }
+    }
+
+    /**
+     * @return the hikariSelected
+     */
+    public boolean isHikariSelected() {
+        return hikariSelected;
+    }
+
+    /**
+     * @param hikariSelected the hikariSelected to set
+     */
+    public void setHikariSelected(boolean hikariSelected) {
+        this.hikariSelected = hikariSelected;
+    }
+
+    public String buildInsertStatementKlant(Klant object) {
+
+        int variableToInsert = 0;
+        String sqlTableName = Klant.class.getSimpleName().toUpperCase();
+        String buildSqlStatment = "INSERT INTO " + sqlTableName + "( ";
+        String valueFieldEnd = "values (";
+        Field[] declaredFields = Klant.class.getDeclaredFields();
+
+        for (Field declaredField : declaredFields) {
+            try {
+                declaredField.setAccessible(true);
+                if (declaredField.get(object) != null) {
+                    if(!isPrimitiveZero(declaredField.get(object))){
+                        variableToInsert++;
+                        if(variableToInsert > 1){
+                            buildSqlStatment += ", ";
+                            valueFieldEnd += ", ";
+                        }
+                        buildSqlStatment += declaredField.getName();
+                        
+                        if(declaredField.get(object) instanceof String){
+                            valueFieldEnd += "\'";
+                        }
+                        valueFieldEnd += declaredField.get(object);
+                        if(declaredField.get(object) instanceof String){
+                            valueFieldEnd += "\'";
+                        }
+                    }
+                }
+            }
+            catch(IllegalArgumentException | IllegalAccessException | SecurityException e){
+                e.printStackTrace();
+            }
+        }
+        return buildSqlStatment + ") " + valueFieldEnd + ")";
+
+    }
+    
+    private boolean isPrimitiveZero(Object object){
+        boolean isPrimitiveZero = false;
+        if(object instanceof Long){
+            if((Long) object == 0){
+                isPrimitiveZero = true; 
+            }
+        }
+        else  if (object instanceof Integer){
+            if((Integer) object == 0){
+                isPrimitiveZero = true;
+            }
+    }
+        else if (object instanceof  Float){
+            if((Float) object == 0.0){
+                isPrimitiveZero = true;
+            }
+        }
+        else if (object instanceof Double){
+            if((Double) object == 0.0){
+                isPrimitiveZero = true;
+            }
+        }
+        return isPrimitiveZero;
     }
 }

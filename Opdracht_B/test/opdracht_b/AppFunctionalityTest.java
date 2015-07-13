@@ -37,6 +37,7 @@ public class AppFunctionalityTest {
     @After
     public void tearDown() {
         functions.deleteKlant(klant.getVoornaam(), klant.getAchternaam());
+        
 
     }
 
@@ -133,6 +134,7 @@ public class AppFunctionalityTest {
         assertEquals("klant, all fields must be equal", klant, result);
     }
 
+    @Test
     public void testUpdateKlant() {
         System.out.println("UpdateKlant");
         functions.createKlant(klant);
@@ -153,6 +155,8 @@ public class AppFunctionalityTest {
         assertEquals("Postcode must be equal", result.getPostcode(), updatedResult.getPostcode());
         assertEquals("woonplaats must be equal", result.getWoonplaats(), updatedResult.getWoonplaats());
         assertEquals("klant, all fields must be equal", result, updatedResult);
+        
+        functions.deleteKlant(updatedResult.getKlant_id());
     }
 
     /**
@@ -226,6 +230,14 @@ public class AppFunctionalityTest {
         assertNotNull("Result, must not be null", result);
         assertEquals("klant, all fields must be equal", klant, result);
 
+    }
+    
+    @Test
+    public void testBuildInsertStatementKlant(){
+        System.out.println("Build Insert Statement");
+        
+        String buildstmt =  functions.buildInsertStatementKlant(klant);
+        System.out.println(buildstmt);
     }
 
 }

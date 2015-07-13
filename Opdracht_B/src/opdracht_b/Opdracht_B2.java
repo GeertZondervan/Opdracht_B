@@ -22,6 +22,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -29,11 +30,14 @@ import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -47,7 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Opdracht_B2 extends Application {
-    
+
     private final Logger log = LoggerFactory.getLogger(this.getClass());
     private ObservableList<ObservableList> data;
     private BorderPane mainPane = new BorderPane();
@@ -143,7 +147,18 @@ public class Opdracht_B2 extends Application {
         buttonBox2.setSpacing(6);
         Button btVervers = new Button("Ververs Tabel");
         Button btNewKlant = new Button("Maak een nieuwe klant");
-        buttonBox2.getChildren().addAll(btVervers, btNewKlant);
+        VBox connectionPoolBox = new VBox();
+        connectionPoolBox.setPadding(new Insets(6));
+        connectionPoolBox.setSpacing(6);
+        Text textConPool = new Text("Connection Pool");
+        RadioButton rbHikari = new RadioButton("Hikari");
+        RadioButton rbC3p0 = new RadioButton("C3P0");
+        ToggleGroup group = new ToggleGroup();
+        rbHikari.setToggleGroup(group);
+        rbC3p0.setToggleGroup(group);
+        rbHikari.setSelected(true);
+        connectionPoolBox.getChildren().addAll(textConPool, rbHikari, rbC3p0);
+        buttonBox2.getChildren().addAll(btVervers, btNewKlant, connectionPoolBox);
 
         //TABLEVIEW
         menuBar.getMenus().addAll(fileMenu, editMenu, helpMenu);
@@ -166,17 +181,19 @@ public class Opdracht_B2 extends Application {
         //Button functions
         btSetConnection.setOnAction(e -> {
             functions.setConnection(tfUrlDatasource.getText().trim(), tfUser.getText().trim(), tfPassword.getText().trim());
-            buildData();
+            buildData(rbHikari.isSelected(), rbC3p0.isSelected());
         });
 
-        btVervers.setOnAction(e -> buildData());
+        btVervers.setOnAction(e -> buildData(rbHikari.isSelected(), rbC3p0.isSelected()));
 
         btNewKlant.setOnAction(e -> {
-            //klantStage.initOwner(primaryStage);
-            newKlantScherm();
+            newKlantScherm(rbHikari.isSelected(), rbC3p0.isSelected());
         });
 
-        btVoerSqlUit.setOnAction(e -> functions.voerSQLUit(taSQL.getText()));
+        btVoerSqlUit.setOnAction(e -> {
+            functions.setHikariSelected(rbHikari.isSelected());
+            functions.voerSQLUit(taSQL.getText());
+        });
 
         btDelete.setOnAction(e -> {
 
@@ -229,12 +246,12 @@ public class Opdracht_B2 extends Application {
         launch(args);
     }
 
-    public void buildData() {
+    public void buildData(boolean hikariSelected, boolean c3p0Selected) {
         Connection con;
         data = FXCollections.observableArrayList();
         try {
             log.info("Database Connection set, url: {}, user: {}, password: {} \n", DBConnect.getUrl(), DBConnect.getUser(), DBConnect.getPassword());
-            
+
             //Database connection + CachedRowSetImpl
 //            crs = new CachedRowSetImpl();
 //            con = DBConnect.getConnection();
@@ -242,14 +259,26 @@ public class Opdracht_B2 extends Application {
 //            int[] keys = {1};
 //            crs.setKeyColumns(keys);
 //            crs.execute(con);
-            
             //Database coneection with Hikari + CachedRowSetImpl
-            crs = new CachedRowSetImpl();
-            con = DBConnect.connectWithHikari();
-            crs.setCommand("SELECT * from Klant");
-            int[] keys = {1};
-            crs.setKeyColumns(keys);
-            crs.execute(con);
+            if (hikariSelected) {
+                log.info("Using HIKARI CONNECTION POOL");
+                crs = new CachedRowSetImpl();
+                con = DBConnect.connectWithHikari();
+                crs.setCommand("SELECT * from Klant");
+                int[] keys = {1};
+                crs.setKeyColumns(keys);
+                crs.execute(con);
+            }
+
+            if (c3p0Selected) {
+                log.info("Using C3P0 CONNECTION POOL");
+                crs = new CachedRowSetImpl();
+                con = DBConnect.connectWithC3p0();
+                crs.setCommand("SELECT * from Klant");
+                int[] keys = {1};
+                crs.setKeyColumns(keys);
+                crs.execute(con);
+            }
 
             //table column added dynamicly
             tableView.setEditable(true);
@@ -411,9 +440,10 @@ public class Opdracht_B2 extends Application {
             ex.printStackTrace();
             System.out.println("Error on building Data");
         }
+
     }
 
-    public void newKlantScherm() {
+    public void newKlantScherm(boolean hikariSelected, boolean c3p0Selected) {
         newKlantPane = new GridPane();
         TextField tfVoornaam = new TextField();
         TextField tfAchternaam = new TextField();
@@ -473,15 +503,14 @@ public class Opdracht_B2 extends Application {
             boolean valid = emailValid.isValid(klant.getEmail());
 
             if (valid && !(klant.getHuisnummer() <= 0)) {
+                functions.setHikariSelected(hikariSelected);
                 functions.createKlant(klant);
                 klantStage.close();
-
             } else if (!valid) {
                 tfEmail.setText("Invalid email adress");
             }
 
-            buildData();
-
+            buildData(hikariSelected, c3p0Selected);
         }
         );
         Scene klantScene = new Scene(newKlantPane, 300, 400);
