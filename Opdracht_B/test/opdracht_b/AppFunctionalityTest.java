@@ -234,10 +234,29 @@ public class AppFunctionalityTest {
     
     @Test
     public void testBuildInsertStatementKlant(){
-        System.out.println("Build Insert Statement");
+        System.out.println("Build Insert Statement Klant");
         
         String buildstmt =  functions.buildInsertStatementKlant(klant);
-        System.out.println(buildstmt);
+        functions.voerSQLUit(buildstmt);
+        
+        Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
+       
+        assertNotNull("Result, must not be null", result);
+        assertEquals("klant, all fields must be equal", klant, result);
+    }
+    
+    @Test
+    public void testBuildInsertStatement(){
+        System.out.println("Build Insert Statement");
+
+        String buildstmt =  functions.buildInsertStatement(klant);
+        functions.voerSQLUit(buildstmt);
+        
+        Klant result = functions.readKlant(klant.getVoornaam(), klant.getAchternaam());
+       
+        assertNotNull("Result, must not be null", result);
+        assertEquals("klant, all fields must be equal", klant, result);
     }
 
+    
 }

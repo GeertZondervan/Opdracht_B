@@ -20,7 +20,7 @@ public class DBConnect {
     private static String password;
     private static String urlHC = "jdbc:mysql://localhost/oefen_opdracht_db";
     private static String userHC = "root";
-    private static String passwordHC = "rsv1er";
+    private static String passwordHC = "root";
 
     public static ComboPooledDataSource getC3p0() {
 

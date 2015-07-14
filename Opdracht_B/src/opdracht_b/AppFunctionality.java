@@ -303,51 +303,93 @@ public class AppFunctionality {
             try {
                 declaredField.setAccessible(true);
                 if (declaredField.get(object) != null) {
-                    if(!isPrimitiveZero(declaredField.get(object))){
+                    if (!isPrimitiveZero(declaredField.get(object))) {
                         variableToInsert++;
-                        if(variableToInsert > 1){
+                        if (variableToInsert > 1) {
                             buildSqlStatment += ", ";
                             valueFieldEnd += ", ";
                         }
                         buildSqlStatment += declaredField.getName();
-                        
-                        if(declaredField.get(object) instanceof String){
+
+                        if (declaredField.get(object) instanceof String) {
                             valueFieldEnd += "\'";
                         }
                         valueFieldEnd += declaredField.get(object);
-                        if(declaredField.get(object) instanceof String){
+                        if (declaredField.get(object) instanceof String) {
                             valueFieldEnd += "\'";
                         }
                     }
                 }
-            }
-            catch(IllegalArgumentException | IllegalAccessException | SecurityException e){
+            } catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
                 e.printStackTrace();
             }
         }
         return buildSqlStatment + ") " + valueFieldEnd + ")";
 
     }
-    
-    private boolean isPrimitiveZero(Object object){
-        boolean isPrimitiveZero = false;
-        if(object instanceof Long){
-            if((Long) object == 0){
-                isPrimitiveZero = true; 
+
+    public String buildInsertStatement(Object object) {
+
+        int variableToInsert = 0;
+        String className = object.getClass().toString();
+        String sqlTableName = className.substring(className.lastIndexOf(".") + 1);
+        String buildSqlStatement = "INSERT INTO " + sqlTableName + "( ";
+        String valueFieldEnd = "values (";
+       
+        try {
+            Class myClass = Class.forName(className);
+            Field[] declaredFields = myClass.getDeclaredFields();
+
+            for (Field declaredField : declaredFields) {
+                try {
+                    declaredField.setAccessible(true);
+                    if (declaredField.get(object) != null) {
+                        if (!isPrimitiveZero(declaredField.get(object))) {
+                            variableToInsert++;
+                            if (variableToInsert > 1) {
+                                buildSqlStatement += ", ";
+                                valueFieldEnd += ", ";
+                            }
+                            buildSqlStatement += declaredField.getName();
+
+                            if (declaredField.get(object) instanceof String) {
+                                valueFieldEnd += "\'";
+                            }
+                            valueFieldEnd += declaredField.get(object);
+                            if (declaredField.get(object) instanceof String) {
+                                valueFieldEnd += "\'";
+                            }
+                        }
+                    }
+                } catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
+                    e.printStackTrace();
+                }
             }
+            return buildSqlStatement + ") " + valueFieldEnd + ")";
+
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+            return "Could not build statement";
         }
-        else  if (object instanceof Integer){
-            if((Integer) object == 0){
-                isPrimitiveZero = true;
-            }
+
     }
-        else if (object instanceof  Float){
-            if((Float) object == 0.0){
+
+    private boolean isPrimitiveZero(Object object) {
+        boolean isPrimitiveZero = false;
+        if (object instanceof Long) {
+            if ((Long) object == 0) {
                 isPrimitiveZero = true;
             }
-        }
-        else if (object instanceof Double){
-            if((Double) object == 0.0){
+        } else if (object instanceof Integer) {
+            if ((Integer) object == 0) {
+                isPrimitiveZero = true;
+            }
+        } else if (object instanceof Float) {
+            if ((Float) object == 0.0) {
+                isPrimitiveZero = true;
+            }
+        } else if (object instanceof Double) {
+            if ((Double) object == 0.0) {
                 isPrimitiveZero = true;
             }
         }
