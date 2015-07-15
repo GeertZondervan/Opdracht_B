@@ -1,6 +1,10 @@
 package opdracht_b;
 
+import annotations.Column;
+import annotations.Entity;
+import annotations.Table;
 import com.sun.rowset.CachedRowSetImpl;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -292,7 +296,6 @@ public class AppFunctionality {
     }
 
     public String buildInsertStatementKlant(Klant object) {
-
         int variableToInsert = 0;
         String sqlTableName = Klant.class.getSimpleName().toUpperCase();
         String buildSqlStatment = "INSERT INTO " + sqlTableName + "( ";
@@ -328,14 +331,23 @@ public class AppFunctionality {
 
     }
 
-    public String buildInsertStatement(Object object) {
+    private String getClassName(Object object) {
 
-        int variableToInsert = 0;
         String className = object.getClass().toString();
+        // klassenaam uit class XXXX string halen, class eraf
+        className = className.substring("class ".length());
+
+        return className;
+
+    }
+
+    public String buildInsertStatement(Object object) {
+        int variableToInsert = 0;
+        String className = getClassName(object);
         String sqlTableName = className.substring(className.lastIndexOf(".") + 1);
         String buildSqlStatement = "INSERT INTO " + sqlTableName + "( ";
         String valueFieldEnd = "values (";
-       
+
         try {
             Class myClass = Class.forName(className);
             Field[] declaredFields = myClass.getDeclaredFields();
@@ -356,6 +368,85 @@ public class AppFunctionality {
                                 valueFieldEnd += "\'";
                             }
                             valueFieldEnd += declaredField.get(object);
+                            if (declaredField.get(object) instanceof String) {
+                                valueFieldEnd += "\'";
+                            }
+                        }
+                    }
+                } catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
+                    e.printStackTrace();
+                }
+            }
+            return buildSqlStatement + ") " + valueFieldEnd + ")";
+
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+            return "Could not build statement";
+        }
+
+    }
+
+    public String buildInsertStatementForAnnotatedObject(Object object) throws IllegalArgumentException {
+        if (!(object.getClass().isAnnotationPresent(Entity.class))) {
+            throw new IllegalArgumentException("Object is not annotated with @Entity");
+        }
+
+        int variableToInsert = 0;
+        String className = getClassName(object);
+        String sqlTableName = null;
+
+        if (object.getClass().isAnnotationPresent(Table.class)) {
+            Table table = object.getClass().getAnnotation(Table.class);
+            if (!(table.tableName().equals(""))) {
+                sqlTableName = table.tableName();
+            } else {
+                sqlTableName = className.substring(className.lastIndexOf(".") + 1);
+            }
+        } else {
+            sqlTableName = className.substring(className.lastIndexOf(".") + 1);
+        }
+
+        String buildSqlStatement = "INSERT INTO " + sqlTableName + "( ";
+        String valueFieldEnd = "values (";
+
+        try {
+            Class myClass = Class.forName(className);
+            Field[] declaredFields = myClass.getDeclaredFields();
+
+            for (Field declaredField : declaredFields) {
+                try {
+                    declaredField.setAccessible(true);
+                    if (declaredField.get(object) != null) {
+                        if (!isPrimitiveZero(declaredField.get(object))) {
+                            variableToInsert++;
+                            if (variableToInsert > 1) {
+                                buildSqlStatement += ", ";
+                                valueFieldEnd += ", ";
+                            }
+
+                            Annotation[] annotations = declaredField.getDeclaredAnnotations();
+                            if (annotations.length < 1) {
+                                buildSqlStatement += declaredField.getName();
+                            } else {
+                                for (Annotation annotation : annotations) {
+                                    if (annotation instanceof Column) {
+                                        Column column = (Column) annotation;
+                                        if (!(column.columnName().equals(""))) {
+                                            buildSqlStatement += column.columnName();
+                                        } else {
+                                            buildSqlStatement += declaredField.getName();
+                                        }
+                                    } else {
+                                        buildSqlStatement += declaredField.getName();
+                                    }
+                                }
+                            }
+                            if (declaredField.get(object) instanceof String) {
+                                valueFieldEnd += "\'";
+                            }
+
+                            valueFieldEnd += declaredField.get(object);
+
                             if (declaredField.get(object) instanceof String) {
                                 valueFieldEnd += "\'";
                             }
